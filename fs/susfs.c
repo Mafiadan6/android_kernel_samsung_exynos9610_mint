@@ -18,6 +18,7 @@
 #include <linux/kthread.h>
 #include <linux/delay.h>
 #include <linux/workqueue.h>
+#include <linux/utsname.h>
 #include <linux/fsnotify_backend.h>
 #include <linux/jump_label.h>
 #include <linux/version.h> // We need check kernel version.
@@ -615,8 +616,33 @@ out_spoof_kstat:
 /* spoof_uname */
 #ifdef CONFIG_KSU_SUSFS_SPOOF_UNAME
 static struct st_susfs_uname my_uname;
-DEFINE_STATIC_KEY_FALSE(susfs_is_uname_spoof_buffer_set);
+static bool susfs_uname_owner;
 static DEFINE_SEQLOCK(susfs_uname_seqlock);
+
+bool susfs_uname_is_active(void)
+{
+	return susfs_uname_owner;
+}
+EXPORT_SYMBOL_GPL(susfs_uname_is_active);
+
+int susfs_set_uname_from_kernel(const char *release, const char *version)
+{
+	write_seqlock(&susfs_uname_seqlock);
+	if (release && release[0])
+		strscpy(my_uname.release, release, __NEW_UTS_LEN);
+	else
+		strscpy(my_uname.release, utsname()->release, __NEW_UTS_LEN);
+	if (version && version[0])
+		strscpy(my_uname.version, version, __NEW_UTS_LEN);
+	else
+		strscpy(my_uname.version, utsname()->version, __NEW_UTS_LEN);
+	susfs_uname_owner = true;
+	write_sequnlock(&susfs_uname_seqlock);
+	SUSFS_LOGI("kernel-set spoofed release: '%s', version: '%s'\n",
+			my_uname.release, my_uname.version);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(susfs_set_uname_from_kernel);
 
 void susfs_set_uname(void __user **user_info) {
 	struct st_susfs_uname info = {0};
@@ -634,9 +660,8 @@ void susfs_set_uname(void __user **user_info) {
 	if (!strcmp(info.release, "default") && !strcmp(info.version, "default")) {
 		write_seqlock(&susfs_uname_seqlock);
 		memset(&my_uname, 0, sizeof(my_uname));
+		susfs_uname_owner = false;
 		write_sequnlock(&susfs_uname_seqlock);
-		if (static_key_enabled(&susfs_is_uname_spoof_buffer_set))
-			static_branch_disable(&susfs_is_uname_spoof_buffer_set);
 	} else {
 		write_seqlock(&susfs_uname_seqlock);
 		if (!strcmp(info.release, "default"))
@@ -647,9 +672,8 @@ void susfs_set_uname(void __user **user_info) {
 			strscpy(my_uname.version, utsname()->version, __NEW_UTS_LEN);
 		else
 			strncpy(my_uname.version, info.version, __NEW_UTS_LEN);
+		susfs_uname_owner = true;
 		write_sequnlock(&susfs_uname_seqlock);
-		if (!static_key_enabled(&susfs_is_uname_spoof_buffer_set))
-			static_branch_enable(&susfs_is_uname_spoof_buffer_set);
 	}
 
 	SUSFS_LOGI("set spoofed release: '%s', version: '%s'\n",
@@ -666,7 +690,7 @@ out_copy_to_user:
 void susfs_spoof_uname(struct new_utsname* tmp) {
 	unsigned seq;
 
-	if (unlikely(my_uname.release[0] == '\0'))
+	if (unlikely(!susfs_uname_owner))
 		return;
 	do {
 		seq = read_seqbegin(&susfs_uname_seqlock);
