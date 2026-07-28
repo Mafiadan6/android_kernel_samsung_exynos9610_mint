@@ -35,23 +35,16 @@ Mint Kernel will **never** be possible without the unwavering work of these awes
 
 ## About
 
-This kernel is a [Mint](https://github.com/TenSeventy7/android_kernel_samsung_exynos9610_mint) derivative with additional features integrated by [bitcockiii](https://t.me/bitcockiii) (爪卂丂ㄒ乇尺爪工刀ᗪ). Additional features include:
+This is a fork of [Mint Kernel](https://github.com/TenSeventy7/android_kernel_samsung_exynos9610_mint) by [TenSeventy7](https://github.com/TenSeventy7). See their repo for the full list of upstream features.
 
- - Built with LLVM/Clang (`proton-clang`) 13
- - Built with Link-Time Optimizations (LTO) enabled
- - A fully-revamped Exynos Mobile Scheduler (EMS) optimized for low-latency tasks.
- - A smarter governor with boost algorithms from the Galaxy S10 as well as 'inferencing' from the S20.
- - Added additional I/O schedulers, `anxiety` is set as default.
- - Various kernel and performance improvements from Linux upstream, and even from Qualcomm devices.
- - Backported changes from multiple devices, including newer Galaxy devices.
- - RAM Plus support (requires ROM support), including support for per-process swap.
- - Disabled basic Samsung hardening (Knox, etc).
- - Added support for WireGuard VPN tunnel.
- - **ReSukiSU v4.1.0** - Root solution with modern hook system
- - **SUSFS v2.2.0** - Kernel-level root hiding (mount, kstat, cmdline, uname spoofing)
- - **DroidSpaces** - Android namespace isolation for enhanced security
- - **BBR TCP congestion control** - Better network performance
- - **SELinux policy fix** - Reapply rules at zygote exec for ReZygisk compatibility
+### Changes by bitcockiii (爪卂丂ㄒ乇尺爪工刀ᗪ)
+
+- Replaced KernelSU-Next with **ReSukiSU v4.1.0**
+- Integrated **SUSFS v2.2.0** (kernel-level root hiding with mount, kstat, cmdline, and uname spoofing)
+- Added **DroidSpaces** support (IPC namespaces, veth, bridge)
+- Enabled **BBR TCP congestion control**
+- Fixed SELinux policy reload for **ReZygisk compatibility** (reapply rules at zygote exec)
+- Updated GitHub Actions workflow with ReSukiSU submodule support
 
 ## How to Install
 
