@@ -636,7 +636,6 @@ int susfs_set_uname_from_kernel(const char *release, const char *version)
 		strscpy(my_uname.version, version, __NEW_UTS_LEN);
 	else
 		strscpy(my_uname.version, utsname()->version, __NEW_UTS_LEN);
-	susfs_uname_owner = true;
 	write_sequnlock(&susfs_uname_seqlock);
 	SUSFS_LOGI("kernel-set spoofed release: '%s', version: '%s'\n",
 			my_uname.release, my_uname.version);
@@ -690,7 +689,7 @@ out_copy_to_user:
 void susfs_spoof_uname(struct new_utsname* tmp) {
 	unsigned seq;
 
-	if (unlikely(!susfs_uname_owner))
+	if (unlikely(my_uname.release[0] == '\0'))
 		return;
 	do {
 		seq = read_seqbegin(&susfs_uname_seqlock);
