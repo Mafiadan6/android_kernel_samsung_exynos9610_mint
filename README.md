@@ -29,10 +29,13 @@ Mint Kernel will **never** be possible without the unwavering work of these awes
  - [StormBreaker Kernel](https://github.com/stormbreaker-project/kernel_xiaomi_surya) (@stormbreaker-project) and [Stratosphere Kernel](https://github.com/Stratosphere-Kernel/android_kernel_xiaomi_surya) (@Stratosphere-Kernel) for the POCO X3
  - [Artemis Kernel for the Pixel 4 XL](https://github.com/celtare21/kernel_google_coral) (@celtare21)
  - [GS101/Tensor SoC Kernel Source](https://github.com/AndreiLux/GS101) (@Google/@AndreiLux)
+ - [ReSukiSU](https://github.com/ReSukiSU/ReSukiSU) - KernelSU fork with SUSFS integration
+ - [SUSFS](https://gitlab.com/simonpunk/susfs4ksu) - Kernel-level root hiding (v2.2.0)
+ - [DroidSpaces](https://github.com/ravindu644/DroidSpaces) - Android namespace isolation
 
 ## About
 
-Mint is an optimized kernel source based on Samsung's open-source kernel drops of the Galaxy A50. Additional features include:
+This kernel is a [Mint](https://github.com/TenSeventy7/android_kernel_samsung_exynos9610_mint) derivative with additional features integrated by [bitcockiii](https://t.me/爪卂丂ㄒ乇尺爪工刀ᗪ). Additional features include:
 
  - Built with LLVM/Clang (`proton-clang`) 13
  - Built with Link-Time Optimizations (LTO) enabled
@@ -44,6 +47,11 @@ Mint is an optimized kernel source based on Samsung's open-source kernel drops o
  - RAM Plus support (requires ROM support), including support for per-process swap.
  - Disabled basic Samsung hardening (Knox, etc).
  - Added support for WireGuard VPN tunnel.
+ - **ReSukiSU v4.1.0** - Root solution with modern hook system
+ - **SUSFS v2.2.0** - Kernel-level root hiding (mount, kstat, cmdline, uname spoofing)
+ - **DroidSpaces** - Android namespace isolation for enhanced security
+ - **BBR TCP congestion control** - Better network performance
+ - **SELinux policy fix** - Reapply rules at zygote exec for ReZygisk compatibility
 
 ## How to Install
 
@@ -73,9 +81,13 @@ sudo apt-get install libelf-dev bzip2 bc p7zip-full jq git python3 python-is-pyt
 sudo dnf install elfutils-libelf-devel bzip2 bc p7zip jq git python3
 ```
 
-Once you have the prerequisites installed, simply run this on the Terminal.
+Once you have the prerequisites installed, clone with submodules and build:
 
-`./build.sh -d|--device <device> -v|--variant <variant> -a|--android <Android version> [main options]`
+```
+git clone --recurse-submodules https://github.com/Mafiadan6/android_kernel_samsung_exynos9610_mint.git
+cd android_kernel_samsung_exynos9610_mint
+./build.sh -d a50 -v oneui -a 12 -k
+```
 
 **Device options:**
 
