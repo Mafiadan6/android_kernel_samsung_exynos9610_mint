@@ -17,6 +17,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
+        with:
+          submodules: recursive
 
       - uses: szenius/set-timezone@v1.0
         with:
@@ -32,7 +34,7 @@ jobs:
         run: sudo apt-get update
 
       - name: Install Debian/Ubuntu dependencies
-        run: sudo apt-get install bzip2 lib32stdc++6 libc6-dev-i386 libncurses5 jq -y
+        run: sudo apt-get install bzip2 lib32stdc++6 libc6-dev-i386 libncurses5 jq libelf-dev -y
 
       - name: Parse build arguments
         run: |
