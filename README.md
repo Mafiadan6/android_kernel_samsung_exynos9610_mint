@@ -35,7 +35,7 @@ Mint Kernel will **never** be possible without the unwavering work of these awes
 
 ## About
 
-This kernel is a [Mint](https://github.com/TenSeventy7/android_kernel_samsung_exynos9610_mint) derivative with additional features integrated by [bitcockiii](https://t.me/爪卂丂ㄒ乇尺爪工刀ᗪ). Additional features include:
+This kernel is a [Mint](https://github.com/TenSeventy7/android_kernel_samsung_exynos9610_mint) derivative with additional features integrated by [bitcockiii](https://t.me/bitcockiii) (爪卂丂ㄒ乇尺爪工刀ᗪ). Additional features include:
 
  - Built with LLVM/Clang (`proton-clang`) 13
  - Built with Link-Time Optimizations (LTO) enabled
