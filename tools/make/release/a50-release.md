@@ -10,7 +10,7 @@ Changelog will be available shortly.
 
 Stable releases of Mint Kernel are available below. **Please read this section carefully to download the appropriate version for the ROM you are currently using**.
 
-| ROM/Firmware you are currently using  |    KernelSU     |     No-Root     |
+| ROM/Firmware you are currently using  |    ReSukiSU     |     No-Root     |
 |---------------------------------------|-----------------|-----------------|
 | One UI 3                	            | [📥 Download]()  | [📥 Download]()  |
 | One UI 4 **and later**  	            | [📥 Download]()  | [📥 Download]()  |

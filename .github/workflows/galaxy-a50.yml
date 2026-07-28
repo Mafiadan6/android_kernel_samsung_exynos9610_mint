@@ -60,7 +60,7 @@ jobs:
           path: "out/boot.img"
           if-no-files-found: error
 
-      - name: Build Mint kernel (KernelSU)
+      - name: Build Mint kernel (ReSukiSU)
         run: |
           set -eo pipefail
           echo "  I: Building Mint kernel ${GITHUB_REF##*/}-${GITHUB_RUN_NUMBER}"
@@ -69,7 +69,7 @@ jobs:
       - name: Upload kernel image artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.type }} Kernel Image (KernelSU)
+          name: ${{ matrix.type }} Kernel Image (ReSukiSU)
           path: "out/boot.img"
           if-no-files-found: error
 
