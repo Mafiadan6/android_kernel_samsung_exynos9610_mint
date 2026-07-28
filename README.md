@@ -37,7 +37,7 @@ Mint Kernel will **never** be possible without the unwavering work of these awes
 
 This is a fork of [Mint Kernel](https://github.com/TenSeventy7/android_kernel_samsung_exynos9610_mint) by [TenSeventy7](https://github.com/TenSeventy7). See their repo for the full list of upstream features.
 
-### Changes by bitcockiii (爪卂丂ㄒ乇尺爪工刀ᗪ)
+### Changes by bitcockiii ([@bitcockiii](https://t.me/bitcockiii) / 爪卂丂ㄒ乇尺爪工刀ᗪ)
 
 - Replaced KernelSU-Next with **ReSukiSU v4.1.0**
 - Integrated **SUSFS v2.2.0** (kernel-level root hiding with mount, kstat, cmdline, and uname spoofing)
