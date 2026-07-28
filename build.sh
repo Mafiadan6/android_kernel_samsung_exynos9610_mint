@@ -131,10 +131,13 @@ SET_ANDROIDVERSION() {
 }
 SET_LOCALVERSION() {
     case "$BUILD_KERNEL_BRANCH" in
-    mainline) export LOCALVERSION="-bitcockiii-$KERNEL_BUILD_VERSION" ;;
-    user)     export LOCALVERSION="-bitcockiii-user-$BUILD_DATE" ;;
-    *)        export LOCALVERSION="-bitcockiii-Beta-$GITHUB_RUN_NUMBER"
+    mainline) MINT_LOCALVER="-bitcockiii-$KERNEL_BUILD_VERSION" ;;
+    user)     MINT_LOCALVER="-bitcockiii-user-$BUILD_DATE" ;;
+    *)        MINT_LOCALVER="-bitcockiii-Beta-$GITHUB_RUN_NUMBER"
     esac
+}
+FLUSH_LOCALVERSION() {
+    true
 }
 SET_ZIPNAME() {
     local MINT_TYPE MINT_SELINUX ONEUI_VERSION ROOT_SOLUTION
@@ -176,16 +179,16 @@ BUILD_KERNEL() {
 
     case "$BUILD_PREF_COMPILER_VERSION" in
     proton)
-        make -C "$TOP" CC="$BUILD_PREF_COMPILER" HOSTCC=clang HOSTCXX=clang++ AR=llvm-ar NM=llvm-nm OBJCOPY=llvm-objcopy OBJDUMP=llvm-objdump STRIP=llvm-strip "$BUILD_DEVICE_TMP_CONFIG" LOCALVERSION="$LOCALVERSION" 2>&1 | sed 's/^/     /'
-        make -C "$TOP" CC="$BUILD_PREF_COMPILER" HOSTCC=clang HOSTCXX=clang++ AR=llvm-ar NM=llvm-nm OBJCOPY=llvm-objcopy OBJDUMP=llvm-objdump STRIP=llvm-strip -j$JOBS LOCALVERSION="$LOCALVERSION" 2>&1 | sed 's/^/     /'
+        make -C "$TOP" CC="$BUILD_PREF_COMPILER" HOSTCC=clang HOSTCXX=clang++ AR=llvm-ar NM=llvm-nm OBJCOPY=llvm-objcopy OBJDUMP=llvm-objdump STRIP=llvm-strip "$BUILD_DEVICE_TMP_CONFIG" EXTRAVERSION="$MINT_LOCALVER" 2>&1 | sed 's/^/     /'
+        make -C "$TOP" CC="$BUILD_PREF_COMPILER" HOSTCC=clang HOSTCXX=clang++ AR=llvm-ar NM=llvm-nm OBJCOPY=llvm-objcopy OBJDUMP=llvm-objdump STRIP=llvm-strip -j$JOBS EXTRAVERSION="$MINT_LOCALVER" 2>&1 | sed 's/^/     /'
         ;;
     clang)
-        make -C "$TOP" CC="$BUILD_PREF_COMPILER" LLVM=1 "$BUILD_DEVICE_TMP_CONFIG" LOCALVERSION="$LOCALVERSION" 2>&1 | sed 's/^/     /'
-        make -C "$TOP" CC="$BUILD_PREF_COMPILER" LLVM=1 -j$JOBS LOCALVERSION="$LOCALVERSION" 2>&1 | sed 's/^/     /'
+        make -C "$TOP" CC="$BUILD_PREF_COMPILER" LLVM=1 "$BUILD_DEVICE_TMP_CONFIG" EXTRAVERSION="$MINT_LOCALVER" 2>&1 | sed 's/^/     /'
+        make -C "$TOP" CC="$BUILD_PREF_COMPILER" LLVM=1 -j$JOBS EXTRAVERSION="$MINT_LOCALVER" 2>&1 | sed 's/^/     /'
         ;;
     *)
-        make -C "$TOP" CC="$BUILD_PREF_COMPILER" "$BUILD_DEVICE_TMP_CONFIG" LOCALVERSION="$LOCALVERSION" 2>&1 | sed 's/^/     /'
-        make -C "$TOP" CC="$BUILD_PREF_COMPILER" -j$JOBS LOCALVERSION="$LOCALVERSION" 2>&1 | sed 's/^/     /'
+        make -C "$TOP" CC="$BUILD_PREF_COMPILER" "$BUILD_DEVICE_TMP_CONFIG" EXTRAVERSION="$MINT_LOCALVER" 2>&1 | sed 's/^/     /'
+        make -C "$TOP" CC="$BUILD_PREF_COMPILER" -j$JOBS EXTRAVERSION="$MINT_LOCALVER" 2>&1 | sed 's/^/     /'
         ;;
     esac
 
@@ -489,6 +492,8 @@ if $BUILD_KERNEL_PERMISSIVE; then
 	script_echo "         This kernel has NO RESPONSIBILITY on whatever happens next."
 	merge_config selinux-permissive
 fi
+
+FLUSH_LOCALVERSION
 
 # Build Mint
 BUILD_KERNEL
