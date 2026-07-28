@@ -131,9 +131,9 @@ SET_ANDROIDVERSION() {
 }
 SET_LOCALVERSION() {
     case "$BUILD_KERNEL_BRANCH" in
-    mainline) export LOCALVERSION=" - bitcockiii $KERNEL_BUILD_VERSION" ;;
-    user)     export LOCALVERSION=" - bitcockiii-user $BUILD_DATE" ;;
-    *)        export LOCALVERSION=" - bitcockiii Beta $GITHUB_RUN_NUMBER"
+    mainline) export LOCALVERSION="-bitcockiii-$KERNEL_BUILD_VERSION" ;;
+    user)     export LOCALVERSION="-bitcockiii-user-$BUILD_DATE" ;;
+    *)        export LOCALVERSION="-bitcockiii-Beta-$GITHUB_RUN_NUMBER"
     esac
 }
 SET_ZIPNAME() {
