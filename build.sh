@@ -131,9 +131,9 @@ SET_ANDROIDVERSION() {
 }
 SET_LOCALVERSION() {
     case "$BUILD_KERNEL_BRANCH" in
-    mainline) export LOCALVERSION=" - Mint $KERNEL_BUILD_VERSION" ;;
-    user)     export LOCALVERSION=" - Mint-user $BUILD_DATE" ;;
-    *)        export LOCALVERSION=" - Mint Beta $GITHUB_RUN_NUMBER"
+    mainline) export LOCALVERSION=" - bitcockiii $KERNEL_BUILD_VERSION" ;;
+    user)     export LOCALVERSION=" - bitcockiii-user $BUILD_DATE" ;;
+    *)        export LOCALVERSION=" - bitcockiii Beta $GITHUB_RUN_NUMBER"
     esac
 }
 SET_ZIPNAME() {
@@ -167,7 +167,7 @@ SET_ZIPNAME() {
     if [[ $BUILD_KERNEL_BRANCH == mainline ]]; then
         FILE_NAME="Mint-${MINT_VERSION}.A${BUILD_ANDROID_PLATFORM}.${MINT_VARIANT}${ONEUI_VERSION}${ROOT_SOLUTION}_${BUILD_DEVICE_NAME^}.zip"
     else
-        FILE_NAME="MintBeta-${MINT_VERSION}.A${BUILD_ANDROID_PLATFORM}.${MINT_VARIANT}${ONEUI_VERSION}-${MINT_SELINUX}${ROOT_SOLUTION}_${BUILD_DEVICE_NAME^}.${MINT_TYPE}.zip"
+        FILE_NAME="bitcockiii-${MINT_VERSION}.A${BUILD_ANDROID_PLATFORM}.${MINT_VARIANT}${ONEUI_VERSION}-${MINT_SELINUX}${ROOT_SOLUTION}_${BUILD_DEVICE_NAME^}.${MINT_TYPE}.zip"
     fi
 }
 
@@ -449,8 +449,6 @@ mkdir -p "$TMP_DIR"
 VERIFY_TOOLCHAIN
 VERIFY_DEFCONFIG
 
-git submodule update --init "$TOP/KernelSU"
-
 if $BUILD_KERNEL_CI; then
 	export KBUILD_BUILD_USER="Clembot"
 	export KBUILD_BUILD_HOST="Lumiose-CI"
@@ -486,6 +484,8 @@ if $BUILD_KERNEL_KSU; then
 else
     merge_config root-none
 fi
+
+merge_config "droidspaces"
 
 if $BUILD_KERNEL_PERMISSIVE; then
 	script_echo "WARNING! You're building this kernel in permissive mode!"

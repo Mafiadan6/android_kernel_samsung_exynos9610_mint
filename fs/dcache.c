@@ -42,6 +42,9 @@
 
 #include "internal.h"
 #include "mount.h"
+#ifdef CONFIG_KSU_SUSFS
+#include <linux/susfs.h>
+#endif
 
 #ifdef CONFIG_RKP_NS_PROT
 u8 ns_prot = 0;
@@ -2359,6 +2362,12 @@ struct dentry *__d_lookup(const struct dentry *parent, const struct qstr *name)
 
 		if (dentry->d_name.hash != hash)
 			continue;
+
+#ifdef CONFIG_KSU_SUSFS_SUS_PATH
+		if (dentry->d_inode && unlikely(susfs_is_inode_sus_path(dentry->d_inode))) {
+			continue;
+		}
+#endif
 
 		spin_lock(&dentry->d_lock);
 		if (dentry->d_parent != parent)
