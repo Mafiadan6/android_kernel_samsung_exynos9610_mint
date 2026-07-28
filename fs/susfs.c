@@ -614,7 +614,7 @@ out_spoof_kstat:
 
 /* spoof_uname */
 #ifdef CONFIG_KSU_SUSFS_SPOOF_UNAME
-static struct st_susfs_uname my_uname = {0};
+static struct st_susfs_uname my_uname;
 DEFINE_STATIC_KEY_FALSE(susfs_is_uname_spoof_buffer_set);
 static DEFINE_SEQLOCK(susfs_uname_seqlock);
 
@@ -631,21 +631,26 @@ void susfs_set_uname(void __user **user_info) {
 		goto out_copy_to_user;
 	}
 
-	write_seqlock(&susfs_uname_seqlock);
-	if (!strcmp(info.release, "default")) {
-		strscpy(my_uname.release, utsname()->release, __NEW_UTS_LEN);
+	if (!strcmp(info.release, "default") && !strcmp(info.version, "default")) {
+		write_seqlock(&susfs_uname_seqlock);
+		memset(&my_uname, 0, sizeof(my_uname));
+		write_sequnlock(&susfs_uname_seqlock);
+		if (static_key_enabled(&susfs_is_uname_spoof_buffer_set))
+			static_branch_disable(&susfs_is_uname_spoof_buffer_set);
 	} else {
-		strscpy(my_uname.release, info.release, __NEW_UTS_LEN);
+		write_seqlock(&susfs_uname_seqlock);
+		if (!strcmp(info.release, "default"))
+			strscpy(my_uname.release, utsname()->release, __NEW_UTS_LEN);
+		else
+			strscpy(my_uname.release, info.release, __NEW_UTS_LEN);
+		if (!strcmp(info.version, "default"))
+			strscpy(my_uname.version, utsname()->version, __NEW_UTS_LEN);
+		else
+			strncpy(my_uname.version, info.version, __NEW_UTS_LEN);
+		write_sequnlock(&susfs_uname_seqlock);
+		if (!static_key_enabled(&susfs_is_uname_spoof_buffer_set))
+			static_branch_enable(&susfs_is_uname_spoof_buffer_set);
 	}
-	if (!strcmp(info.version, "default")) {
-		strscpy(my_uname.version, info.version, __NEW_UTS_LEN);
-	} else {
-		strncpy(my_uname.version, info.version, __NEW_UTS_LEN);
-	}
-	write_sequnlock(&susfs_uname_seqlock);
-
-	if (!static_key_enabled(&susfs_is_uname_spoof_buffer_set))
-		static_branch_enable(&susfs_is_uname_spoof_buffer_set);
 
 	SUSFS_LOGI("set spoofed release: '%s', version: '%s'\n",
 				my_uname.release, my_uname.version);
@@ -661,6 +666,8 @@ out_copy_to_user:
 void susfs_spoof_uname(struct new_utsname* tmp) {
 	unsigned seq;
 
+	if (unlikely(my_uname.release[0] == '\0'))
+		return;
 	do {
 		seq = read_seqbegin(&susfs_uname_seqlock);
 		strscpy(tmp->release, my_uname.release, __NEW_UTS_LEN);

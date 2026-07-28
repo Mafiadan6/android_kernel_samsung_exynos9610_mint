@@ -130,11 +130,7 @@ SET_ANDROIDVERSION() {
     echo "CONFIG_MINT_PLATFORM_VERSION=$BUILD_ANDROID_PLATFORM" >> "$BUILD_CONFIG_DIR/$BUILD_DEVICE_TMP_CONFIG"
 }
 SET_LOCALVERSION() {
-    case "$BUILD_KERNEL_BRANCH" in
-    mainline) MINT_LOCALVER="-bitcockiii-$KERNEL_BUILD_VERSION" ;;
-    user)     MINT_LOCALVER="-bitcockiii-user-$BUILD_DATE" ;;
-    *)        MINT_LOCALVER="-bitcockiii-Beta-$GITHUB_RUN_NUMBER"
-    esac
+    true
 }
 FLUSH_LOCALVERSION() {
     true
@@ -179,16 +175,16 @@ BUILD_KERNEL() {
 
     case "$BUILD_PREF_COMPILER_VERSION" in
     proton)
-        make -C "$TOP" CC="$BUILD_PREF_COMPILER" HOSTCC=clang HOSTCXX=clang++ AR=llvm-ar NM=llvm-nm OBJCOPY=llvm-objcopy OBJDUMP=llvm-objdump STRIP=llvm-strip "$BUILD_DEVICE_TMP_CONFIG" EXTRAVERSION="$MINT_LOCALVER" 2>&1 | sed 's/^/     /'
-        make -C "$TOP" CC="$BUILD_PREF_COMPILER" HOSTCC=clang HOSTCXX=clang++ AR=llvm-ar NM=llvm-nm OBJCOPY=llvm-objcopy OBJDUMP=llvm-objdump STRIP=llvm-strip -j$JOBS EXTRAVERSION="$MINT_LOCALVER" 2>&1 | sed 's/^/     /'
+        make -C "$TOP" CC="$BUILD_PREF_COMPILER" HOSTCC=clang HOSTCXX=clang++ AR=llvm-ar NM=llvm-nm OBJCOPY=llvm-objcopy OBJDUMP=llvm-objdump STRIP=llvm-strip "$BUILD_DEVICE_TMP_CONFIG" 2>&1 | sed 's/^/     /'
+        make -C "$TOP" CC="$BUILD_PREF_COMPILER" HOSTCC=clang HOSTCXX=clang++ AR=llvm-ar NM=llvm-nm OBJCOPY=llvm-objcopy OBJDUMP=llvm-objdump STRIP=llvm-strip -j$JOBS 2>&1 | sed 's/^/     /'
         ;;
     clang)
-        make -C "$TOP" CC="$BUILD_PREF_COMPILER" LLVM=1 "$BUILD_DEVICE_TMP_CONFIG" EXTRAVERSION="$MINT_LOCALVER" 2>&1 | sed 's/^/     /'
-        make -C "$TOP" CC="$BUILD_PREF_COMPILER" LLVM=1 -j$JOBS EXTRAVERSION="$MINT_LOCALVER" 2>&1 | sed 's/^/     /'
+        make -C "$TOP" CC="$BUILD_PREF_COMPILER" LLVM=1 "$BUILD_DEVICE_TMP_CONFIG" 2>&1 | sed 's/^/     /'
+        make -C "$TOP" CC="$BUILD_PREF_COMPILER" LLVM=1 -j$JOBS 2>&1 | sed 's/^/     /'
         ;;
     *)
-        make -C "$TOP" CC="$BUILD_PREF_COMPILER" "$BUILD_DEVICE_TMP_CONFIG" EXTRAVERSION="$MINT_LOCALVER" 2>&1 | sed 's/^/     /'
-        make -C "$TOP" CC="$BUILD_PREF_COMPILER" -j$JOBS EXTRAVERSION="$MINT_LOCALVER" 2>&1 | sed 's/^/     /'
+        make -C "$TOP" CC="$BUILD_PREF_COMPILER" "$BUILD_DEVICE_TMP_CONFIG" 2>&1 | sed 's/^/     /'
+        make -C "$TOP" CC="$BUILD_PREF_COMPILER" -j$JOBS 2>&1 | sed 's/^/     /'
         ;;
     esac
 
