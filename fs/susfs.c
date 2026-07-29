@@ -615,6 +615,9 @@ out_spoof_kstat:
 
 /* spoof_uname */
 #ifdef CONFIG_KSU_SUSFS_SPOOF_UNAME
+static char original_release[__NEW_UTS_LEN + 1];
+static char original_version[__NEW_UTS_LEN + 1];
+static bool original_saved;
 static struct st_susfs_uname my_uname;
 static bool susfs_uname_owner;
 static DEFINE_SEQLOCK(susfs_uname_seqlock);
@@ -625,17 +628,32 @@ bool susfs_uname_is_active(void)
 }
 EXPORT_SYMBOL_GPL(susfs_uname_is_active);
 
+static void susfs_update_init_uts_ns(void)
+{
+	strscpy(init_uts_ns.name.release, my_uname.release, __NEW_UTS_LEN);
+	strscpy(init_uts_ns.name.version, my_uname.version, __NEW_UTS_LEN);
+}
+
+static void susfs_restore_init_uts_ns(void)
+{
+	if (original_saved) {
+		strscpy(init_uts_ns.name.release, original_release, __NEW_UTS_LEN);
+		strscpy(init_uts_ns.name.version, original_version, __NEW_UTS_LEN);
+	}
+}
+
 int susfs_set_uname_from_kernel(const char *release, const char *version)
 {
 	write_seqlock(&susfs_uname_seqlock);
 	if (release && release[0])
 		strscpy(my_uname.release, release, __NEW_UTS_LEN);
 	else
-		strscpy(my_uname.release, utsname()->release, __NEW_UTS_LEN);
+		strscpy(my_uname.release, init_uts_ns.name.release, __NEW_UTS_LEN);
 	if (version && version[0])
 		strscpy(my_uname.version, version, __NEW_UTS_LEN);
 	else
-		strscpy(my_uname.version, utsname()->version, __NEW_UTS_LEN);
+		strscpy(my_uname.version, init_uts_ns.name.version, __NEW_UTS_LEN);
+	susfs_update_init_uts_ns();
 	write_sequnlock(&susfs_uname_seqlock);
 	SUSFS_LOGI("kernel-set spoofed release: '%s', version: '%s'\n",
 			my_uname.release, my_uname.version);
@@ -660,18 +678,20 @@ void susfs_set_uname(void __user **user_info) {
 		write_seqlock(&susfs_uname_seqlock);
 		memset(&my_uname, 0, sizeof(my_uname));
 		susfs_uname_owner = false;
+		susfs_restore_init_uts_ns();
 		write_sequnlock(&susfs_uname_seqlock);
 	} else {
 		write_seqlock(&susfs_uname_seqlock);
 		if (!strcmp(info.release, "default"))
-			strscpy(my_uname.release, utsname()->release, __NEW_UTS_LEN);
+			strscpy(my_uname.release, init_uts_ns.name.release, __NEW_UTS_LEN);
 		else
 			strscpy(my_uname.release, info.release, __NEW_UTS_LEN);
 		if (!strcmp(info.version, "default"))
-			strscpy(my_uname.version, utsname()->version, __NEW_UTS_LEN);
+			strscpy(my_uname.version, init_uts_ns.name.version, __NEW_UTS_LEN);
 		else
-			strncpy(my_uname.version, info.version, __NEW_UTS_LEN);
+			strscpy(my_uname.version, info.version, __NEW_UTS_LEN);
 		susfs_uname_owner = true;
+		susfs_update_init_uts_ns();
 		write_sequnlock(&susfs_uname_seqlock);
 	}
 
@@ -1543,6 +1563,11 @@ void susfs_try_umount(uid_t uid) {
 void susfs_init(void) {\
 	SUSFS_LOGI("Initializing susfs_extra_works\n");
 	INIT_WORK(&susfs_extra_works, susfs_run_extra_works);
+#ifdef CONFIG_KSU_SUSFS_SPOOF_UNAME
+	strscpy(original_release, init_uts_ns.name.release, __NEW_UTS_LEN);
+	strscpy(original_version, init_uts_ns.name.version, __NEW_UTS_LEN);
+	original_saved = true;
+#endif
 	SUSFS_LOGI("susfs is initialized! version: " SUSFS_VERSION " \n");
 }
 
