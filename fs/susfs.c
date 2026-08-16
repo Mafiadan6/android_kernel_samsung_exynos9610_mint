@@ -613,6 +613,31 @@ out_spoof_kstat:
 }
 #endif // #ifdef CONFIG_KSU_SUSFS_SUS_KSTAT
 
+/* sanitize locale day/month abbreviations to English for Samsung Settings regex */
+static void susfs_sanitize_kernel_version(char *version)
+{
+	static const char *de[7] = {"So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"};
+	static const char *en[7] = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
+	char *p;
+	int i;
+
+	for (i = 0; i < 7; i++) {
+		while ((p = strstr(version, de[i])) && p[2] == ' ') {
+			memmove(p + 3, p + 2, strlen(p + 2) + 1);
+			memcpy(p, en[i], 3);
+		}
+	}
+
+	while ((p = strstr(version, "März")))
+		memcpy(p, "Mar", 3);
+	while ((p = strstr(version, "Mai")))
+		memcpy(p, "May", 3);
+	while ((p = strstr(version, "Okt")))
+		memcpy(p, "Oct", 3);
+	while ((p = strstr(version, "Dez")))
+		memcpy(p, "Dec", 3);
+}
+
 /* spoof_uname */
 #ifdef CONFIG_KSU_SUSFS_SPOOF_UNAME
 static char original_release[__NEW_UTS_LEN + 1];
@@ -688,8 +713,10 @@ void susfs_set_uname(void __user **user_info) {
 			strscpy(my_uname.release, info.release, __NEW_UTS_LEN);
 		if (!strcmp(info.version, "default"))
 			strscpy(my_uname.version, init_uts_ns.name.version, __NEW_UTS_LEN);
-		else
+		else {
 			strscpy(my_uname.version, info.version, __NEW_UTS_LEN);
+			susfs_sanitize_kernel_version(my_uname.version);
+		}
 		susfs_uname_owner = true;
 		susfs_update_init_uts_ns();
 		write_sequnlock(&susfs_uname_seqlock);
