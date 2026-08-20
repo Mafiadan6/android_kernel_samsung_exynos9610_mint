@@ -484,18 +484,6 @@ int mountzero_handle_getattr(int ret, const struct path *path, struct kstat *sta
     }
     rcu_read_unlock();
 
-    if (unlikely(stat->ino > 10000 && stat->ino < 5000000 &&
-                 !IS_ERR_OR_NULL(path->dentry->d_parent) &&
-                 !IS_ERR_OR_NULL(path->dentry->d_parent->d_name.name))) {
-        if (!strcmp(path->dentry->d_name.name, "tmp")) {
-            char buf[256];
-            char *pp = d_path(path->dentry->d_parent, buf, sizeof(buf));
-            if (!IS_ERR(pp) && !strcmp(pp, "/data/local")) {
-                stat->ino = 42;
-            }
-        }
-    }
-
     return ret;
 }
 
