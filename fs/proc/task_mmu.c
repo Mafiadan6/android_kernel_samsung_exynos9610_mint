@@ -533,6 +533,10 @@ extern void susfs_sus_kstat_spoof_show_map_vma(struct inode *inode, dev_t *out_d
 extern int susfs_open_redirect_spoof_show_map_vma(struct inode *inode, unsigned long *out_ino, dev_t *out_dev, char *spoofed_name);
 #endif // #ifdef CONFIG_KSU_SUSFS_OPEN_REDIRECT
 
+#ifdef CONFIG_MOUNTZERO
+extern bool mountzero_spoof_mmap_metadata(struct inode *inode, dev_t *dev, unsigned long *ino);
+#endif
+
 static void
 show_map_vma(struct seq_file *m, struct vm_area_struct *vma, int is_pid)
 {
@@ -564,6 +568,9 @@ show_map_vma(struct seq_file *m, struct vm_area_struct *vma, int is_pid)
 #endif // #ifdef CONFIG_KSU_SUSFS_SUS_MAP
 		dev = inode->i_sb->s_dev;
 		ino = inode->i_ino;
+#ifdef CONFIG_MOUNTZERO
+		mountzero_spoof_mmap_metadata(inode, &dev, &ino);
+#endif
 		pgoff = ((loff_t)vma->vm_pgoff) << PAGE_SHIFT;
 #ifdef CONFIG_KSU_SUSFS_SUS_KSTAT
 		susfs_sus_kstat_spoof_show_map_vma(inode, &dev, &ino);

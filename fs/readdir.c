@@ -28,6 +28,10 @@ extern int susfs_get_data_path(struct path *path);
 extern bool susfs_is_inode_sus_path(struct inode *inode);
 #endif
 
+#ifdef CONFIG_MOUNTZERO
+extern int mountzero_handle_iterate_dir(struct file *file, struct dir_context *ctx);
+#endif
+
 int iterate_dir(struct file *file, struct dir_context *ctx)
 {
 	struct inode *inode = file_inode(file);
@@ -53,10 +57,14 @@ int iterate_dir(struct file *file, struct dir_context *ctx)
 	res = -ENOENT;
 	if (!IS_DEADDIR(inode)) {
 		ctx->pos = file->f_pos;
+#ifdef CONFIG_MOUNTZERO
+		res = mountzero_handle_iterate_dir(file, ctx);
+#else
 		if (shared)
 			res = file->f_op->iterate_shared(file, ctx);
 		else
 			res = file->f_op->iterate(file, ctx);
+#endif
 		file->f_pos = ctx->pos;
 		fsnotify_access(file);
 		file_accessed(file);

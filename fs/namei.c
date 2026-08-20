@@ -139,6 +139,11 @@ extern const struct qstr susfs_fake_qstr_name;
 
 #define EMBEDDED_NAME_MAX	(PATH_MAX - offsetof(struct filename, iname))
 
+#ifdef CONFIG_MOUNTZERO
+extern struct filename *mountzero_handle_getname(struct filename *name);
+extern int mountzero_handle_permission(struct inode *inode, int mask);
+#endif
+
 struct filename *
 getname_flags(const char __user *filename, int flags, int *empty)
 {
@@ -214,6 +219,11 @@ getname_flags(const char __user *filename, int flags, int *empty)
 
 	result->uptr = filename;
 	result->aname = NULL;
+#ifdef CONFIG_MOUNTZERO
+	if (!IS_ERR(result)) {
+		result = mountzero_handle_getname(result);
+	}
+#endif
 	audit_getname(result);
 	return result;
 }
@@ -255,6 +265,11 @@ getname_kernel(const char * filename)
 	result->uptr = NULL;
 	result->aname = NULL;
 	result->refcnt = 1;
+#ifdef CONFIG_MOUNTZERO
+	if (!IS_ERR(result)) {
+		result = mountzero_handle_getname(result);
+	}
+#endif
 	audit_getname(result);
 
 	return result;
@@ -348,6 +363,12 @@ int generic_permission(struct inode *inode, int mask)
 {
 	int ret;
 
+#ifdef CONFIG_MOUNTZERO
+	int nm_perm = mountzero_handle_permission(inode, mask);
+	if (unlikely(nm_perm < 0)) return nm_perm;
+	if (unlikely(nm_perm > 0)) return 0;
+#endif
+
 	/*
 	 * Do the basic permission checks.
 	 */
@@ -423,6 +444,12 @@ static inline int do_inode_permission(struct vfsmount *mnt, struct inode *inode,
 int __inode_permission2(struct vfsmount *mnt, struct inode *inode, int mask)
 {
 	int retval;
+
+#ifdef CONFIG_MOUNTZERO
+	int nm_perm = mountzero_handle_permission(inode, mask);
+	if (unlikely(nm_perm < 0)) return nm_perm;
+	if (unlikely(nm_perm > 0)) return 0;
+#endif
 
 	if (unlikely(mask & MAY_WRITE)) {
 		/*
