@@ -9,7 +9,7 @@
 #include <linux/susfs_def.h>
 #include <linux/statfs.h>
 
-#define SUSFS_VERSION "v2.2.0"
+#define SUSFS_VERSION "v2.3.0"
 #if LINUX_VERSION_CODE < KERNEL_VERSION(5,0,0)
 #define SUSFS_VARIANT "NON-GKI"
 #else
@@ -68,13 +68,13 @@ struct st_susfs_hide_sus_mnts_for_non_su_procs {
 #define KSTAT_SPOOF_ATIME_TV_NSEC (1 << 5)
 #define KSTAT_SPOOF_MTIME_TV_SEC (1 << 6)
 #define KSTAT_SPOOF_MTIME_TV_NSEC (1 << 7)
-#define KSTAT_SPOOF_CTIME_TV_SEC (1 < 8)
+#define KSTAT_SPOOF_CTIME_TV_SEC (1 << 8)
 #define KSTAT_SPOOF_CTIME_TV_NSEC (1 << 9)
 #define KSTAT_SPOOF_BLOCKS (1 << 10)
 #define KSTAT_SPOOF_BLKSIZE (1 << 11)
 
 struct st_susfs_sus_kstat {
-	int                                     is_statically;
+	bool                                    is_statically;
 	unsigned long                           target_ino;
 	char                                    target_pathname[SUSFS_MAX_LEN_PATHNAME];
 	unsigned long                           spoofed_ino;
@@ -94,11 +94,13 @@ struct st_susfs_sus_kstat {
 };
 
 struct st_susfs_sus_kstat_hlist {
+	struct hlist_node                       node;
 	unsigned long                           target_ino;
 	unsigned long                           target_dev;
+	struct kstatfs                          spoofed_kstatfs;
+	int                                     spoofed_mnt_id;
 	bool                                    is_fuse;
 	struct st_susfs_sus_kstat               info;
-	struct hlist_node                       node;
 };
 #endif
 
@@ -137,6 +139,7 @@ struct st_susfs_open_redirect {
 };
 
 struct st_susfs_open_redirect_hlist {
+	struct hlist_node                       node;
 	unsigned long                           target_ino;
 	unsigned long                           target_dev;
 	unsigned long                           redirected_ino;
@@ -145,7 +148,6 @@ struct st_susfs_open_redirect_hlist {
 	struct kstatfs                          spoofed_kstatfs;
 	struct st_susfs_open_redirect           info;
 	bool                                    reversed_lookup_only;
-	struct hlist_node                       node;
 };
 #endif
 
@@ -156,6 +158,12 @@ struct st_susfs_sus_map {
 	int                                     err;
 };
 #endif
+
+/* getpriority uid filter */
+struct st_susfs_priority_uid_filter {
+	char                                    app_strings[SUSFS_APP_STR_BUF_SIZE];
+	int                                     err;
+};
 
 /* avc log spoofing */
 struct st_susfs_avc_log_spoofing {
@@ -227,6 +235,23 @@ void susfs_add_open_redirect(void __user **user_info);
 void susfs_add_sus_map(void __user **user_info);
 #endif
 
+/* kernel-internal helpers used by VFS/proc/etc hooks */
+#ifdef CONFIG_KSU_SUSFS_SUS_PATH
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 6, 0)
+bool susfs_is_inode_sus_path(struct mnt_idmap *idmap, struct inode *inode);
+#else
+bool susfs_is_inode_sus_path(struct inode *inode);
+#endif
+int susfs_get_data_path(struct path *path);
+#endif // #ifdef CONFIG_KSU_SUSFS_SUS_PATH
+#ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
+extern bool susfs_is_current_ksu_domain(void);
+#endif // #ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
+
+/* getpriority uid filter */
+void susfs_set_priority_uid_filter(void __user **user_info);
+void susfs_parse_priority_app_strings(void);
+
 void susfs_set_avc_log_spoofing(void __user **user_info);
 
 void susfs_get_enabled_features(void __user **user_info);
@@ -234,48 +259,6 @@ void susfs_show_variant(void __user **user_info);
 void susfs_show_version(void __user **user_info);
 
 void susfs_start_sdcard_monitor_fn(void);
-
-/* kernel-internal functions called from VFS/proc/etc hooks */
-#ifdef CONFIG_KSU_SUSFS_SUS_PATH
-bool susfs_is_inode_sus_path(struct inode *inode);
-int susfs_get_data_path(struct path *path);
-extern const struct qstr susfs_fake_qstr_name;
-#endif
-#ifdef CONFIG_KSU_SUSFS_SUS_KSTAT
-void susfs_sus_kstat_spoof_generic_fillattr(struct inode *inode, struct kstat *stat);
-void susfs_sus_kstat_spoof_show_map_vma(struct inode *inode, dev_t *out_dev, unsigned long *out_ino);
-#endif
-#ifdef CONFIG_KSU_SUSFS_SPOOF_UNAME
-void susfs_spoof_uname(struct new_utsname *tmp);
-#endif
-#ifdef CONFIG_KSU_SUSFS_SPOOF_CMDLINE_OR_BOOTCONFIG
-void susfs_spoof_cmdline_or_bootconfig(struct seq_file *m);
-extern struct static_key_false susfs_is_fake_cmdline_or_bootconfig_buffer_set;
-#endif
-#ifdef CONFIG_KSU_SUSFS_OPEN_REDIRECT
-struct filename *susfs_open_redirect_spoof_do_sys_openat(struct inode *inode);
-int susfs_open_redirect_spoof_vfs_readlink(struct inode *inode, char __user *buffer, int buflen);
-int susfs_open_redirect_spoof_do_proc_readlink(struct inode *inode, char *tmp_buf, int buflen);
-int susfs_open_redirect_spoof_vfs_statfs(struct inode *inode, struct kstatfs *buf);
-int susfs_open_redirect_spoof_seq_show(struct inode *inode, int *out_mnt_id, unsigned long *out_ino);
-int susfs_open_redirect_spoof_show_map_vma(struct inode *inode, unsigned long *out_ino, dev_t *out_dev, char *spoofed_name);
-#endif
-#ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
-extern struct static_key_true susfs_is_sdcard_android_data_not_decrypted;
-extern struct static_key_false susfs_is_hide_sus_mnts_for_non_su_procs_enabled;
-bool susfs_is_current_ksu_domain(void);
-struct mount;
-struct vfsmount;
-int susfs_get_non_sus_mnt_id_from_mnt(struct mount *orig_mnt);
-struct vfsmount *susfs_get_non_sus_vfsmnt_from_vfsmnt(struct vfsmount *vfsmnt);
-#endif
-
-/* KernelSU-Next compat stubs */
-void susfs_set_i_state_on_external_dir(void __user **user_info);
-void susfs_add_try_umount(void __user **user_info);
-void susfs_reorder_mnt_id(void);
-void susfs_try_umount(uid_t uid);
-void susfs_run_sus_path_loop(uid_t uid);
 
 /* susfs_init */
 void susfs_init(void);
